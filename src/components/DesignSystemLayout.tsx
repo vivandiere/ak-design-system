@@ -118,6 +118,17 @@ export default function DesignSystemLayout({ children }: DesignSystemLayoutProps
                 >
                   Date Picker Popup Demo
                 </Link>
+                <Link 
+                  href="/villas-filter" 
+                  className={cn(
+                    "ds-body block py-2 px-3 rounded-md transition-colors text-sm",
+                    pathname === '/villas-filter' 
+                      ? "bg-gray-100 text-gray-900" 
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                  )}
+                >
+                  Villas Filter
+                </Link>
               </div>
             </div>
           </nav>

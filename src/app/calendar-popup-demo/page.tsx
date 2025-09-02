@@ -58,7 +58,7 @@ export default function CalendarPopupDemo() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <header className="mb-12">
-          <h1 className="ds-display mb-4">Date Picker Popup Component</h1>
+          <h1 className="ds-display mb-4">Date Picker Popup</h1>
           <p className="ds-body-large text-gray-600 max-w-3xl">
             A comprehensive calendar popup component for date selection in booking interfaces. Features include 
             weekly/short stay modes, duration controls, real-time pricing, and full A&K design system integration.

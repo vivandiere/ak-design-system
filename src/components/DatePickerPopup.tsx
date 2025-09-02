@@ -256,43 +256,43 @@ const DatePickerPopup: React.FC<DatePickerPopupProps> = ({
       <div className="flex items-center justify-between mb-4">
         <button
           onClick={handlePrevMonth}
-          className="p-1 hover:bg-gray-100 rounded transition-colors"
+          className="p-2 hover:bg-linen-50 rounded-full transition-colors"
         >
-          <ChevronLeft className="w-4 h-4 text-gray-600" />
+          <ChevronLeft className="w-4 h-4 text-onyx-60" />
         </button>
         
         <div className="text-center">
-          <div className="text-sm font-medium text-gray-900">
+          <div className="label-base text-onyx">
             {months[viewDate.month]} {viewDate.year}
           </div>
         </div>
         
         <button
           onClick={handleNextMonth}
-          className="p-1 hover:bg-gray-100 rounded transition-colors"
+          className="p-2 hover:bg-linen-50 rounded-full transition-colors"
         >
-          <ChevronRight className="w-4 h-4 text-gray-600" />
+          <ChevronRight className="w-4 h-4 text-onyx-60" />
         </button>
       </div>
 
       {/* Booking Mode Toggle */}
       <div className="flex justify-center mb-3">
-        <div className="flex bg-gray-100 rounded-lg p-1">
+        <div className="flex bg-linen-100 rounded-lg p-1">
           <button
             onClick={() => setBookingMode('weekly')}
-            className={`px-3 py-1.5 rounded-md text-xs transition-colors font-medium
+            className={`px-3 py-1.5 rounded-md body-small transition-colors font-medium
               ${bookingMode === 'weekly' 
                 ? 'bg-white text-burnt-sienna-600 shadow-sm' 
-                : 'text-gray-600 hover:text-gray-900'}`}
+                : 'text-onyx-60 hover:text-onyx'}`}
           >
             Weekly Stays
           </button>
           <button
             onClick={() => setBookingMode('short')}
-            className={`px-3 py-1.5 rounded-md text-xs transition-colors font-medium
+            className={`px-3 py-1.5 rounded-md body-small transition-colors font-medium
               ${bookingMode === 'short' 
                 ? 'bg-white text-burnt-sienna-600 shadow-sm' 
-                : 'text-gray-600 hover:text-gray-900'}`}
+                : 'text-onyx-60 hover:text-onyx'}`}
           >
             Short Stays
           </button>
@@ -300,51 +300,51 @@ const DatePickerPopup: React.FC<DatePickerPopupProps> = ({
       </div>
 
       {/* Instructions */}
-      <div className="text-xs text-gray-700 text-center mb-3 font-medium">
+      <div className="body-small text-onyx-80 text-center mb-3 font-medium">
         {bookingMode === 'weekly' 
           ? 'CLICK ANY SATURDAY TO START A STAY, THEN USE + / - TO ADJUST LENGTH'
           : `Select any date to start a ${MIN_SHORT_STAY}-night minimum stay`}
       </div>
 
       {/* Day Headers */}
-      <div className="grid grid-cols-7 gap-0.5 mb-2">
-        {days.map((day, index) => (
+      <div className="grid grid-cols-7 gap-1 mb-2">
+        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
           <div
             key={index}
-            className="w-8 h-8 text-xs text-gray-500 font-medium text-center flex items-center justify-center"
+            className="w-8 h-8 flex items-center justify-center"
           >
-            {day}
+            <span className="body-small text-onyx-60 font-medium">{day}</span>
           </div>
         ))}
       </div>
 
       {/* Calendar Grid */}
-      <div className="grid grid-cols-7 gap-0.5 mb-4">
+      <div className="grid grid-cols-7 gap-1 mb-4">
         {weeks.map((week, weekIndex) =>
           week.days.map((day, dayIndex) => (
-            <button
-              key={`${weekIndex}-${dayIndex}`}
-              onClick={() => day.date && handleDayClick(day)}
-              disabled={!day.date}
-              className={`
-                w-8 h-8 text-xs rounded border transition-all
-                ${!day.date ? 'bg-transparent border-transparent cursor-default' : ''}
-                ${(bookingMode === 'weekly' && day.checkin) || bookingMode === 'short' 
-                  ? 'hover:bg-burnt-sienna-100 cursor-pointer border-gray-200 hover:border-burnt-sienna-300' : ''}
-                ${isDateInStayPeriod(day.date) 
-                  ? 'bg-amber-100 border-amber-400 text-amber-800' : ''}
-                ${day.fullDate && selectedStay.start && day.fullDate.getTime() === selectedStay.start.getTime() 
-                  ? 'bg-burnt-sienna-100 border-burnt-sienna-500 text-burnt-sienna-800' : ''}
-                ${day.fullDate && selectedStay.end && day.fullDate.getTime() === selectedStay.end.getTime() 
-                  ? 'bg-cerulean-100 border-cerulean-500 text-cerulean-800' : ''}
-                ${day.date && !isDateInStayPeriod(day.date) && (!day.fullDate || 
-                  (day.fullDate.getTime() !== selectedStay?.start?.getTime() && 
-                   day.fullDate.getTime() !== selectedStay?.end?.getTime())) 
-                  ? 'bg-gray-50 border-gray-200 text-gray-700' : ''}
-              `}
-            >
-              {day.date}
-            </button>
+            <div key={`${weekIndex}-${dayIndex}`} className="w-8 h-8">
+              {day.date ? (
+                <button
+                  onClick={() => handleDayClick(day)}
+                  disabled={!((bookingMode === 'weekly' && day.checkin) || bookingMode === 'short')}
+                  className={`w-full h-full rounded-full text-sm transition-colors ${
+                    day.fullDate && selectedStay.start && day.fullDate.getTime() === selectedStay.start.getTime()
+                      ? 'bg-burnt-sienna-500 text-white'
+                      : day.fullDate && selectedStay.end && day.fullDate.getTime() === selectedStay.end.getTime()
+                      ? 'bg-burnt-sienna-500 text-white'
+                      : isDateInStayPeriod(day.date)
+                      ? 'bg-burnt-sienna-100 text-onyx'
+                      : (bookingMode === 'weekly' && day.checkin) || bookingMode === 'short'
+                      ? 'hover:bg-linen-50 text-onyx cursor-pointer'
+                      : 'text-onyx-40 cursor-not-allowed'
+                  }`}
+                >
+                  {day.date}
+                </button>
+              ) : (
+                <div className="w-8 h-8" />
+              )}
+            </div>
           ))
         )}
       </div>
@@ -352,16 +352,12 @@ const DatePickerPopup: React.FC<DatePickerPopupProps> = ({
       {/* Legend */}
       <div className="flex gap-3 justify-center mb-4">
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 bg-burnt-sienna-100 border border-burnt-sienna-500 rounded"></div>
-          <span className="text-xs text-gray-600">Check-in</span>
+          <div className="w-3 h-3 bg-burnt-sienna-500 rounded-full"></div>
+          <span className="body-small text-onyx-60">Check-in/out</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 bg-amber-100 border border-amber-400 rounded"></div>
-          <span className="text-xs text-gray-600">Stay Period</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 bg-cerulean-100 border border-cerulean-500 rounded"></div>
-          <span className="text-xs text-gray-600">Check-out</span>
+          <div className="w-3 h-3 bg-burnt-sienna-100 rounded-full"></div>
+          <span className="body-small text-onyx-60">Stay Period</span>
         </div>
       </div>
 
@@ -373,34 +369,34 @@ const DatePickerPopup: React.FC<DatePickerPopupProps> = ({
             <button 
               onClick={() => bookingMode === 'weekly' ? handleChangeWeeks(-1) : handleChangeNights(-1)}
               disabled={bookingMode === 'weekly' ? selectedStay.weeks <= 1 : selectedStay.nights <= MIN_SHORT_STAY}
-              className="p-1 hover:bg-gray-100 rounded disabled:opacity-50"
+              className="p-1 hover:bg-linen-50 rounded disabled:opacity-50"
             >
-              <Minus className="w-3 h-3" />
+              <Minus className="w-3 h-3 text-onyx-60" />
             </button>
-            <span className="text-sm font-medium text-gray-900">
+            <span className="body-base font-medium text-onyx">
               {bookingMode === 'weekly' 
                 ? `${selectedStay.weeks} week${selectedStay.weeks > 1 ? 's' : ''}`
                 : `${selectedStay.nights} night${selectedStay.nights > 1 ? 's' : ''}`}
             </span>
             <button 
               onClick={() => bookingMode === 'weekly' ? handleChangeWeeks(1) : handleChangeNights(1)}
-              className="p-1 hover:bg-gray-100 rounded"
+              className="p-1 hover:bg-linen-50 rounded"
             >
-              <Plus className="w-3 h-3" />
+              <Plus className="w-3 h-3 text-onyx-60" />
             </button>
           </div>
           
           {/* Date Range */}
-          <div className="text-xs text-gray-600 text-center">
+          <div className="body-small text-onyx-60 text-center">
             {getStayPeriodText()}
           </div>
 
           {/* Pricing */}
           <div className="text-center">
-            <div className="text-lg font-medium text-gray-900">
+            <div className="body-lg font-medium text-onyx">
               ${getTotalPrice().toLocaleString()}
             </div>
-            <div className="text-xs text-gray-500">
+            <div className="body-small text-onyx-60">
               ${bookingMode === 'weekly' 
                 ? `${getWeeklyPrice().toLocaleString()} per week`
                 : `${getNightlyPrice().toLocaleString()} per night`}
@@ -410,7 +406,7 @@ const DatePickerPopup: React.FC<DatePickerPopupProps> = ({
           {/* Confirm Button */}
           <button 
             onClick={handleConfirmSelection}
-            className="w-full bg-burnt-sienna-500 hover:bg-burnt-sienna-600 text-white py-2 px-4 rounded text-sm font-medium transition-colors"
+            className="w-full bg-burnt-sienna-500 hover:bg-burnt-sienna-600 text-white py-2 px-4 rounded body-small font-medium transition-colors"
           >
             Confirm Dates
           </button>
