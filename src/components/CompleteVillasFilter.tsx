@@ -6,11 +6,11 @@ import CompactDestinationFilter from './CompactDestinationFilter';
 import DateRangeSelector from './DateRangeSelector';
 
 const CompleteVillasFilter = () => {
-  const [guests, setGuests] = useState('Any');
-  const [bedrooms, setBedrooms] = useState('Any');
+  const [guests, setGuests] = useState<string>('Any');
+  const [bedrooms, setBedrooms] = useState<string>('Any');
   const [priceRange, setPriceRange] = useState([0, 2500]);
   const [selectedVillaType, setSelectedVillaType] = useState('All');
-  const [selectedAmenities, setSelectedAmenities] = useState(new Set());
+  const [selectedAmenities, setSelectedAmenities] = useState(new Set<string>());
 
   const villaTypes = [
     'All', 'Beach Villas', 'Family Villas', 'Large Group', 'Amazing Pools', 
@@ -24,31 +24,31 @@ const CompleteVillasFilter = () => {
     'Tennis Court', 'Gym', 'Gated Entry'
   ];
 
-  const handleGuestChange = (direction) => {
+  const handleGuestChange = (direction: 'increase' | 'decrease') => {
     if (direction === 'decrease' && guests !== 'Any') {
       const current = parseInt(guests);
-      setGuests(current > 1 ? current - 1 : 'Any');
+      setGuests(current > 1 ? (current - 1).toString() : 'Any');
     } else if (direction === 'increase' && guests !== 'Any') {
       const current = parseInt(guests);
-      setGuests(current + 1);
+      setGuests((current + 1).toString());
     } else if (direction === 'increase' && guests === 'Any') {
-      setGuests(1);
+      setGuests('1');
     }
   };
 
-  const handleBedroomChange = (direction) => {
+  const handleBedroomChange = (direction: 'increase' | 'decrease') => {
     if (direction === 'decrease' && bedrooms !== 'Any') {
       const current = parseInt(bedrooms);
-      setBedrooms(current > 1 ? current - 1 : 'Any');
+      setBedrooms(current > 1 ? (current - 1).toString() : 'Any');
     } else if (direction === 'increase' && bedrooms !== 'Any') {
       const current = parseInt(bedrooms);
-      setBedrooms(current + 1);
+      setBedrooms((current + 1).toString());
     } else if (direction === 'increase' && bedrooms === 'Any') {
-      setBedrooms(1);
+      setBedrooms('1');
     }
   };
 
-  const handleAmenityToggle = (amenity) => {
+  const handleAmenityToggle = (amenity: string) => {
     const newSelected = new Set(selectedAmenities);
     if (newSelected.has(amenity)) {
       newSelected.delete(amenity);
@@ -58,9 +58,9 @@ const CompleteVillasFilter = () => {
     setSelectedAmenities(newSelected);
   };
 
-  const handlePriceChange = (index, value) => {
+  const handlePriceChange = (index: number, value: number) => {
     const newRange = [...priceRange];
-    newRange[index] = parseInt(value);
+    newRange[index] = value;
     setPriceRange(newRange);
   };
 
@@ -171,7 +171,7 @@ const CompleteVillasFilter = () => {
                   const sliderContainer = e.currentTarget.closest('.relative');
                   if (!sliderContainer) return;
                   
-                  const handleDrag = (moveEvent) => {
+                  const handleDrag = (moveEvent: MouseEvent) => {
                     const rect = sliderContainer.getBoundingClientRect();
                     const x = moveEvent.clientX - rect.left;
                     const percent = Math.max(0, Math.min(100, (x / rect.width) * 100));
@@ -199,7 +199,7 @@ const CompleteVillasFilter = () => {
                   const sliderContainer = e.currentTarget.closest('.relative');
                   if (!sliderContainer) return;
                   
-                  const handleDrag = (moveEvent) => {
+                  const handleDrag = (moveEvent: MouseEvent) => {
                     const rect = sliderContainer.getBoundingClientRect();
                     const x = moveEvent.clientX - rect.left;
                     const percent = Math.max(0, Math.min(100, (x / rect.width) * 100));

@@ -4,10 +4,10 @@ import { useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 
 const CompactDestinationFilter = () => {
-  const [expandedCountries, setExpandedCountries] = useState({});
-  const [selectedDestinations, setSelectedDestinations] = useState(new Set());
+  const [expandedCountries, setExpandedCountries] = useState<Record<string, boolean>>({});
+  const [selectedDestinations, setSelectedDestinations] = useState(new Set<string>());
 
-  const destinations = {
+  const destinations: Record<string, { regions: string[] }> = {
     'Italy': {
       regions: ['Sicily', 'Puglia', 'Tuscany', 'Umbria', 'Amalfi Coast', 'Lake Como']
     },
@@ -32,7 +32,7 @@ const CompactDestinationFilter = () => {
     }));
   };
 
-  const toggleDestination = (destination) => {
+  const toggleDestination = (destination: string) => {
     const newSelected = new Set(selectedDestinations);
     if (newSelected.has(destination)) {
       newSelected.delete(destination);
@@ -42,7 +42,7 @@ const CompactDestinationFilter = () => {
     setSelectedDestinations(newSelected);
   };
 
-  const toggleCountryAndRegions = (country) => {
+  const toggleCountryAndRegions = (country: string) => {
     const newSelected = new Set(selectedDestinations);
     const allRegions = destinations[country].regions;
     
@@ -62,13 +62,13 @@ const CompactDestinationFilter = () => {
     setSelectedDestinations(newSelected);
   };
 
-  const isCountrySelected = (country) => {
+  const isCountrySelected = (country: string) => {
     return destinations[country].regions.every(region => 
       selectedDestinations.has(region)
     );
   };
 
-  const isCountryPartiallySelected = (country) => {
+  const isCountryPartiallySelected = (country: string) => {
     const selectedRegions = destinations[country].regions.filter(region => 
       selectedDestinations.has(region)
     );
