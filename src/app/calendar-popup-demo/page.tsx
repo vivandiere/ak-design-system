@@ -75,7 +75,7 @@ export default function CalendarPopupDemo() {
               <div className="w-96 bg-linen-100 p-6 rounded-lg">
                 {/* DATES Section */}
                 <div className="mb-6">
-                  <h4 className="font-medium text-gray-900 mb-4 text-lg">DATES</h4>
+                  <h4 className="label-lg text-onyx mb-4">DATES</h4>
                   
                   {/* Date Input Field */}
                   <div 

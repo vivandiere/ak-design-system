@@ -116,7 +116,7 @@ export default function DesignSystemLayout({ children }: DesignSystemLayoutProps
                       : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                   )}
                 >
-                  Date Picker Popup Demo
+                  Date Picker Popup
                 </Link>
                 <Link 
                   href="/villas-filter" 
