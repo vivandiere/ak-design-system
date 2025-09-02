@@ -25,7 +25,7 @@ const CompactDestinationFilter = () => {
     }
   };
 
-  const toggleCountry = (country) => {
+  const toggleCountry = (country: string) => {
     setExpandedCountries(prev => ({
       ...prev,
       [country]: !prev[country]
