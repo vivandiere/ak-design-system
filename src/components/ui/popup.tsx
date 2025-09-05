@@ -9,47 +9,53 @@ interface PopupProps {
   children: React.ReactNode;
   className?: string;
   anchorRef?: React.RefObject<HTMLElement>;
+  centerInViewport?: boolean; // New prop for centering in viewport
 }
 
 const Popup = React.forwardRef<HTMLDivElement, PopupProps>(
-  ({ isOpen, onClose, children, className, anchorRef }, ref) => {
+  ({ isOpen, onClose, children, className, anchorRef, centerInViewport = false }, ref) => {
     const [position, setPosition] = useState({ top: 0, left: 0 });
 
     useEffect(() => {
-      if (isOpen && anchorRef?.current) {
-        const rect = anchorRef.current.getBoundingClientRect();
-        const popupWidth = 384; // w-96 = 384px
-        const popupHeight = 600; // Approximate height of the calendar popup
-        
-        // Calculate initial position below the anchor
-        let top = rect.bottom + 8;
-        let left = rect.left;
-        
-        // Check if popup would go below viewport
-        if (top + popupHeight > window.innerHeight) {
-          // Position above the anchor instead
-          top = rect.top - popupHeight - 8;
+      if (isOpen) {
+        if (centerInViewport) {
+          // Center in viewport - no positioning needed as we'll use CSS
+          setPosition({ top: 0, left: 0 });
+        } else if (anchorRef?.current) {
+          const rect = anchorRef.current.getBoundingClientRect();
+          const popupWidth = 384; // w-96 = 384px
+          const popupHeight = 600; // Approximate height of the calendar popup
+          
+          // Calculate initial position below the anchor
+          let top = rect.bottom + 8;
+          let left = rect.left;
+          
+          // Check if popup would go below viewport
+          if (top + popupHeight > window.innerHeight) {
+            // Position above the anchor instead
+            top = rect.top - popupHeight - 8;
+          }
+          
+          // Check if popup would go right of viewport
+          if (left + popupWidth > window.innerWidth) {
+            // Align to right edge of viewport with some margin
+            left = window.innerWidth - popupWidth - 16;
+          }
+          
+          // Ensure popup doesn't go left of viewport
+          if (left < 16) {
+            left = 16;
+          }
+          
+          // Ensure popup doesn't go above viewport
+          if (top < 16) {
+            top = 16;
+          }
+          
+          setPosition({ top, left });
         }
-        
-        // Check if popup would go right of viewport
-        if (left + popupWidth > window.innerWidth) {
-          // Align to right edge of viewport with some margin
-          left = window.innerWidth - popupWidth - 16;
-        }
-        
-        // Ensure popup doesn't go left of viewport
-        if (left < 16) {
-          left = 16;
-        }
-        
-        // Ensure popup doesn't go above viewport
-        if (top < 16) {
-          top = 16;
-        }
-        
-        setPosition({ top, left });
       }
-    }, [isOpen, anchorRef]);
+    }, [isOpen, anchorRef, centerInViewport]);
 
     if (!isOpen) return null;
 
@@ -67,9 +73,13 @@ const Popup = React.forwardRef<HTMLDivElement, PopupProps>(
           className={cn(
             "fixed z-50 bg-white border border-gray-200 shadow-lg rounded-lg",
             "transition-all duration-200 ease-out",
+            centerInViewport && "top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2",
+            centerInViewport && "max-h-[90vh] overflow-auto", // Add scrolling for very tall content
             className
           )}
-          style={{
+          style={centerInViewport ? {
+            opacity: 1,
+          } : {
             top: `${position.top}px`,
             left: `${position.left}px`,
             opacity: 1,

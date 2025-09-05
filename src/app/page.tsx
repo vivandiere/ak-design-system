@@ -72,8 +72,15 @@ export default function Home() {
                 href="/calendar-popup-demo" 
                 className="ds-body text-burnt-sienna-600 hover:text-burnt-sienna-700 underline underline-offset-4"
               >
-                Date Picker Popup Demo
+                📅 Booking Module and Date Picker
               </Link>
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 mt-4">
+                <h3 className="font-semibold text-green-800 mb-2">✅ Gap Issue Resolved!</h3>
+                <p className="text-green-700 text-sm">
+                  Calendar now features perfect connected ranges with zero white gaps using 
+                  CSS Grid + negative margins technique.
+                </p>
+              </div>
             </div>
           </div>
         </section>

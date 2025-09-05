@@ -10,6 +10,7 @@ interface Day {
   checkin: boolean;
   checkout: boolean;
   name?: string;
+  isUnavailable?: boolean;
 }
 
 interface Week {
@@ -64,6 +65,73 @@ const DatePickerPopup: React.FC<DatePickerPopupProps> = ({
 
   const MIN_SHORT_STAY = minStayNights;
 
+  // Mock booking data - in a real app this would come from an API
+  const getWeeklyBookings = (): { start: Date; weeks: number }[] => {
+    return [
+      { start: new Date(2025, 3, 12), weeks: 1 }, // April 12-18 (1 week)
+      { start: new Date(2025, 3, 26), weeks: 2 }, // April 26 - May 9 (2 weeks)
+      { start: new Date(2025, 4, 17), weeks: 1 }, // May 17-23 (1 week)
+    ];
+  };
+
+  const getShortStayBookings = (): { start: Date; nights: number }[] => {
+    return [
+      { start: new Date(2025, 4, 3), nights: 4 },  // May 3-6 (4 nights)
+      { start: new Date(2025, 4, 31), nights: 3 }, // May 31 - June 2 (3 nights)
+    ];
+  };
+
+  const getBookedDates = (): Date[] => {
+    const bookedDates: Date[] = [];
+    
+    // Add weekly bookings (Saturday to Friday blocks)
+    getWeeklyBookings().forEach(booking => {
+      for (let week = 0; week < booking.weeks; week++) {
+        for (let day = 0; day < 7; day++) {
+          const date = new Date(booking.start);
+          date.setDate(booking.start.getDate() + (week * 7) + day);
+          bookedDates.push(date);
+        }
+      }
+    });
+
+    // Add short stay bookings
+    getShortStayBookings().forEach(booking => {
+      for (let day = 0; day < booking.nights; day++) {
+        const date = new Date(booking.start);
+        date.setDate(booking.start.getDate() + day);
+        bookedDates.push(date);
+      }
+    });
+
+    return bookedDates;
+  };
+
+  const getAllUnavailableDates = (): Date[] => {
+    const unavailableDates: Date[] = [];
+    
+    // Add all booked dates (weekly and short stay bookings)
+    unavailableDates.push(...getBookedDates());
+    
+    // Add maintenance/unavailable periods
+    unavailableDates.push(
+      new Date(2025, 3, 1),  // April 1
+      new Date(2025, 3, 2),  // April 2 
+      new Date(2025, 3, 3),  // April 3
+      new Date(2025, 5, 10), // June 10
+      new Date(2025, 5, 11), // June 11
+    );
+    
+    return unavailableDates;
+  };
+
+  const isDateUnavailable = (date: Date): boolean => {
+    const unavailableDates = getAllUnavailableDates();
+    return unavailableDates.some(unavailableDate => 
+      unavailableDate.getTime() === date.getTime()
+    );
+  };
+
   // Update selectedStay when props change
   useEffect(() => {
     setSelectedStay(prev => ({
@@ -97,7 +165,7 @@ const DatePickerPopup: React.FC<DatePickerPopupProps> = ({
   const handleNextMonth = () => {
     setViewDate(prev => ({
       year: prev.month === 11 ? prev.year + 1 : prev.year,
-      month: prev.month === 11 ? 0 : prev.month - 1
+      month: prev.month === 11 ? 0 : prev.month + 1
     }));
   };
 
@@ -127,6 +195,13 @@ const DatePickerPopup: React.FC<DatePickerPopupProps> = ({
     if (!selectedStay.start) return;
     
     const newWeeks = Math.max(1, selectedStay.weeks + increment);
+    
+    // Check if the new period is available
+    if (!isWeeklyPeriodAvailable(selectedStay.start, newWeeks)) {
+      alert('This extended period overlaps with existing bookings or unavailable dates.');
+      return;
+    }
+    
     const newEndDate = updateStayDuration(selectedStay.start, newWeeks);
     
     setSelectedStay(prev => ({
@@ -140,6 +215,13 @@ const DatePickerPopup: React.FC<DatePickerPopupProps> = ({
     if (!selectedStay.start) return;
     
     const newNights = Math.max(MIN_SHORT_STAY, selectedStay.nights + increment);
+    
+    // Check if the new period is available
+    if (!isShortStayPeriodAvailable(selectedStay.start, newNights)) {
+      alert('This extended period overlaps with existing bookings or unavailable dates.');
+      return;
+    }
+    
     const newEndDate = updateShortStayDuration(selectedStay.start, newNights);
     
     setSelectedStay(prev => ({
@@ -149,11 +231,45 @@ const DatePickerPopup: React.FC<DatePickerPopupProps> = ({
     }));
   };
 
+  const isWeeklyPeriodAvailable = (startDate: Date, weeks: number): boolean => {
+    for (let week = 0; week < weeks; week++) {
+      for (let day = 0; day < 7; day++) {
+        const checkDate = new Date(startDate);
+        checkDate.setDate(startDate.getDate() + (week * 7) + day);
+        if (isDateUnavailable(checkDate)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  };
+
+  const isShortStayPeriodAvailable = (startDate: Date, nights: number): boolean => {
+    for (let day = 0; day < nights; day++) {
+      const checkDate = new Date(startDate);
+      checkDate.setDate(startDate.getDate() + day);
+      if (isDateUnavailable(checkDate)) {
+        return false;
+      }
+    }
+    return true;
+  };
+
   const handleDayClick = (day: Day) => {
     if (!day.date || !day.fullDate) return;
     
+    // Prevent clicking on unavailable dates
+    if (day.isUnavailable) return;
+    
     if (bookingMode === 'weekly') {
       if (!day.checkin) return;
+      
+      // Check if the full week is available before allowing selection
+      if (!isWeeklyPeriodAvailable(day.fullDate, 1)) {
+        alert('This week overlaps with existing bookings or unavailable dates.');
+        return;
+      }
+      
       const newEndDate = updateStayDuration(day.fullDate, 1);
       setSelectedStay({
         start: day.fullDate,
@@ -162,6 +278,12 @@ const DatePickerPopup: React.FC<DatePickerPopupProps> = ({
         nights: 7
       });
     } else {
+      // Check if the short stay period is available
+      if (!isShortStayPeriodAvailable(day.fullDate, MIN_SHORT_STAY)) {
+        alert('This stay period overlaps with existing bookings or unavailable dates.');
+        return;
+      }
+      
       const newEndDate = updateShortStayDuration(day.fullDate, MIN_SHORT_STAY);
       setSelectedStay({
         start: day.fullDate,
@@ -195,7 +317,8 @@ const DatePickerPopup: React.FC<DatePickerPopupProps> = ({
             fullDate,
             checkin: dayIndex === 6, // Saturday
             checkout: dayIndex === 5, // Friday
-            name: days[dayIndex]
+            name: days[dayIndex],
+            isUnavailable: isDateUnavailable(fullDate)
           });
           currentDate++;
         }
@@ -210,6 +333,32 @@ const DatePickerPopup: React.FC<DatePickerPopupProps> = ({
     if (!date || !selectedStay.start || !selectedStay.end) return false;
     const checkDate = new Date(viewDate.year, viewDate.month, date);
     return checkDate >= selectedStay.start && checkDate <= selectedStay.end;
+  };
+
+  const getStayPeriodPosition = (day: Day, weekIndex: number, dayIndex: number, weeks: Week[]) => {
+    if (!day.date || !isDateInStayPeriod(day.date)) return null;
+    
+    const isStart = day.fullDate && selectedStay.start && day.fullDate.getTime() === selectedStay.start.getTime();
+    const isEnd = day.fullDate && selectedStay.end && day.fullDate.getTime() === selectedStay.end.getTime();
+    const isMiddle = !isStart && !isEnd;
+    
+    // Check if this is the first/last day of a week
+    const isStartOfWeek = dayIndex === 0;
+    const isEndOfWeek = dayIndex === 6;
+    
+    // Check if the previous/next day is also in the stay period (within the same week)
+    const prevDayInPeriod = dayIndex > 0 && weeks[weekIndex] && weeks[weekIndex].days[dayIndex - 1].date && isDateInStayPeriod(weeks[weekIndex].days[dayIndex - 1].date);
+    const nextDayInPeriod = dayIndex < 6 && weeks[weekIndex] && weeks[weekIndex].days[dayIndex + 1].date && isDateInStayPeriod(weeks[weekIndex].days[dayIndex + 1].date);
+    
+    return {
+      isStart,
+      isEnd,
+      isMiddle,
+      isStartOfWeek,
+      isEndOfWeek,
+      prevDayInPeriod,
+      nextDayInPeriod
+    };
   };
 
   const getStayPeriodText = () => {
@@ -321,36 +470,75 @@ const DatePickerPopup: React.FC<DatePickerPopupProps> = ({
       {/* Calendar Grid */}
       <div className="grid grid-cols-7 gap-1 mb-4">
         {weeks.map((week, weekIndex) =>
-          week.days.map((day, dayIndex) => (
-            <div key={`${weekIndex}-${dayIndex}`} className="w-8 h-8">
-              {day.date ? (
-                <button
-                  onClick={() => handleDayClick(day)}
-                  disabled={!((bookingMode === 'weekly' && day.checkin) || bookingMode === 'short')}
-                  className={`w-full h-full rounded-full text-sm transition-colors ${
-                    day.fullDate && selectedStay.start && day.fullDate.getTime() === selectedStay.start.getTime()
-                      ? 'bg-burnt-sienna-500 text-white'
-                      : day.fullDate && selectedStay.end && day.fullDate.getTime() === selectedStay.end.getTime()
-                      ? 'bg-burnt-sienna-500 text-white'
-                      : isDateInStayPeriod(day.date)
-                      ? 'bg-burnt-sienna-100 text-onyx'
-                      : (bookingMode === 'weekly' && day.checkin) || bookingMode === 'short'
-                      ? 'hover:bg-linen-50 text-onyx cursor-pointer'
-                      : 'text-onyx-40 cursor-not-allowed'
-                  }`}
-                >
-                  {day.date}
-                </button>
-              ) : (
-                <div className="w-8 h-8" />
-              )}
-            </div>
-          ))
+          week.days.map((day, dayIndex) => {
+            const stayPosition = getStayPeriodPosition(day, weekIndex, dayIndex, weeks);
+            
+            let borderRadiusClass = 'rounded-full';
+            if (stayPosition) {
+              const { isStart, isEnd, isStartOfWeek, isEndOfWeek } = stayPosition;
+              
+              if (isStart && isEnd) {
+                // Single day stay
+                borderRadiusClass = 'rounded-full';
+              } else if (isStart) {
+                // Start of stay - rounded left, square right unless end of week
+                borderRadiusClass = isEndOfWeek ? 'rounded-full' : 'rounded-l-full';
+              } else if (isEnd) {
+                // End of stay - square left unless start of week, rounded right
+                borderRadiusClass = isStartOfWeek ? 'rounded-full' : 'rounded-r-full';
+              } else {
+                // Middle of stay - square unless at week boundaries
+                if (isStartOfWeek && isEndOfWeek) {
+                  borderRadiusClass = 'rounded-full';
+                } else if (isStartOfWeek) {
+                  borderRadiusClass = 'rounded-l-full';
+                } else if (isEndOfWeek) {
+                  borderRadiusClass = 'rounded-r-full';
+                } else {
+                  borderRadiusClass = 'rounded-none';
+                }
+              }
+            }
+            
+            return (
+              <div key={`${weekIndex}-${dayIndex}`} className={`w-8 h-8 relative ${
+                stayPosition && stayPosition.isMiddle && !stayPosition.isStartOfWeek && !stayPosition.isEndOfWeek ? '-mx-1.5' : ''
+              } ${
+                stayPosition && stayPosition.isStart && !stayPosition.isEnd && !stayPosition.isEndOfWeek ? '-mr-1.5' : ''
+              } ${
+                stayPosition && stayPosition.isEnd && !stayPosition.isStart && !stayPosition.isStartOfWeek ? '-ml-1.5' : ''
+              }`}>
+                {day.date ? (
+                  <button
+                    onClick={() => handleDayClick(day)}
+                    disabled={day.isUnavailable || !((bookingMode === 'weekly' && day.checkin) || bookingMode === 'short')}
+                    className={`w-full h-full text-sm transition-colors relative ${borderRadiusClass} ${
+                      day.isUnavailable
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-60'
+                        : day.fullDate && selectedStay.start && day.fullDate.getTime() === selectedStay.start.getTime()
+                        ? 'bg-burnt-sienna-500 text-white z-20'
+                        : day.fullDate && selectedStay.end && day.fullDate.getTime() === selectedStay.end.getTime()
+                        ? 'bg-burnt-sienna-500 text-white z-20'
+                        : isDateInStayPeriod(day.date)
+                        ? 'bg-burnt-sienna-100 text-onyx z-10'
+                        : (bookingMode === 'weekly' && day.checkin) || bookingMode === 'short'
+                        ? 'hover:bg-burnt-sienna-50 text-onyx cursor-pointer'
+                        : 'text-onyx-40 cursor-not-allowed'
+                    }`}
+                  >
+                    {day.date}
+                  </button>
+                ) : (
+                  <div className="w-8 h-8" />
+                )}
+              </div>
+            );
+          })
         )}
       </div>
 
       {/* Legend */}
-      <div className="flex gap-3 justify-center mb-4">
+      <div className="flex gap-2 justify-center mb-4 flex-wrap text-center">
         <div className="flex items-center gap-1">
           <div className="w-3 h-3 bg-burnt-sienna-500 rounded-full"></div>
           <span className="body-small text-onyx-60">Check-in/out</span>
@@ -358,6 +546,10 @@ const DatePickerPopup: React.FC<DatePickerPopupProps> = ({
         <div className="flex items-center gap-1">
           <div className="w-3 h-3 bg-burnt-sienna-100 rounded-full"></div>
           <span className="body-small text-onyx-60">Stay Period</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-3 h-3 bg-gray-100 border border-gray-300 rounded-full opacity-60"></div>
+          <span className="body-small text-onyx-60">Unavailable</span>
         </div>
       </div>
 

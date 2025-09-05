@@ -36,6 +36,30 @@ export default function Navigation() {
             >
               Button System
             </Link>
+            <Link 
+              href="/badges" 
+              className="ui-header hover:text-gray-900 transition-colors"
+            >
+              Badges
+            </Link>
+            <Link 
+              href="/product-cards" 
+              className="ui-header hover:text-gray-900 transition-colors"
+            >
+              Product Cards
+            </Link>
+            <Link 
+              href="/calendar" 
+              className="ui-header hover:text-gray-900 transition-colors"
+            >
+              Calendar System
+            </Link>
+            <Link 
+              href="/shadcn-calendar-demo" 
+              className="ui-header hover:text-gray-900 transition-colors"
+            >
+              Shadcn Calendar Demo
+            </Link>
           </div>
         </div>
       </div>

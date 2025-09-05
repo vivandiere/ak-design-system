@@ -10,6 +10,7 @@ interface Day {
   checkin: boolean;
   checkout: boolean;
   name?: string;
+  isUnavailable?: boolean;
 }
 
 interface Week {
@@ -45,6 +46,73 @@ const CalendarVisualization = () => {
   });
 
   const MIN_SHORT_STAY = 3;
+
+  // Mock booking data - in a real app this would come from an API
+  const getWeeklyBookings = (): { start: Date; weeks: number }[] => {
+    return [
+      { start: new Date(2025, 3, 12), weeks: 1 }, // April 12-18 (1 week)
+      { start: new Date(2025, 3, 26), weeks: 2 }, // April 26 - May 9 (2 weeks)
+      { start: new Date(2025, 4, 17), weeks: 1 }, // May 17-23 (1 week)
+    ];
+  };
+
+  const getShortStayBookings = (): { start: Date; nights: number }[] => {
+    return [
+      { start: new Date(2025, 4, 3), nights: 4 },  // May 3-6 (4 nights)
+      { start: new Date(2025, 4, 31), nights: 3 }, // May 31 - June 2 (3 nights)
+    ];
+  };
+
+  const getBookedDates = (): Date[] => {
+    const bookedDates: Date[] = [];
+    
+    // Add weekly bookings (Saturday to Friday blocks)
+    getWeeklyBookings().forEach(booking => {
+      for (let week = 0; week < booking.weeks; week++) {
+        for (let day = 0; day < 7; day++) {
+          const date = new Date(booking.start);
+          date.setDate(booking.start.getDate() + (week * 7) + day);
+          bookedDates.push(date);
+        }
+      }
+    });
+
+    // Add short stay bookings
+    getShortStayBookings().forEach(booking => {
+      for (let day = 0; day < booking.nights; day++) {
+        const date = new Date(booking.start);
+        date.setDate(booking.start.getDate() + day);
+        bookedDates.push(date);
+      }
+    });
+
+    return bookedDates;
+  };
+
+  const getAllUnavailableDates = (): Date[] => {
+    const unavailableDates: Date[] = [];
+    
+    // Add all booked dates (weekly and short stay bookings)
+    unavailableDates.push(...getBookedDates());
+    
+    // Add maintenance/unavailable periods
+    unavailableDates.push(
+      new Date(2025, 3, 1),  // April 1
+      new Date(2025, 3, 2),  // April 2 
+      new Date(2025, 3, 3),  // April 3
+      new Date(2025, 5, 10), // June 10
+      new Date(2025, 5, 11), // June 11
+    );
+    
+    return unavailableDates;
+  };
+
+  const isDateUnavailable = (date: Date): boolean => {
+    const unavailableDates = getAllUnavailableDates();
+    return unavailableDates.some(unavailableDate => 
+      unavailableDate.getTime() === date.getTime()
+    );
+  };
 
   React.useEffect(() => {
     if (selectedStay.end) {
@@ -100,6 +168,13 @@ const CalendarVisualization = () => {
     if (!selectedStay.start) return;
     
     const newWeeks = Math.max(1, selectedStay.weeks + increment);
+    
+    // Check if the new period is available
+    if (!isWeeklyPeriodAvailable(selectedStay.start, newWeeks)) {
+      alert('This extended period overlaps with existing bookings or unavailable dates.');
+      return;
+    }
+    
     const newEndDate = updateStayDuration(selectedStay.start, newWeeks);
     
     setSelectedStay(prev => ({
@@ -113,6 +188,13 @@ const CalendarVisualization = () => {
     if (!selectedStay.start) return;
     
     const newNights = Math.max(MIN_SHORT_STAY, selectedStay.nights + increment);
+    
+    // Check if the new period is available
+    if (!isShortStayPeriodAvailable(selectedStay.start, newNights)) {
+      alert('This extended period overlaps with existing bookings or unavailable dates.');
+      return;
+    }
+    
     const newEndDate = updateShortStayDuration(selectedStay.start, newNights);
     
     setSelectedStay(prev => ({
@@ -122,11 +204,45 @@ const CalendarVisualization = () => {
     }));
   };
 
+  const isWeeklyPeriodAvailable = (startDate: Date, weeks: number): boolean => {
+    for (let week = 0; week < weeks; week++) {
+      for (let day = 0; day < 7; day++) {
+        const checkDate = new Date(startDate);
+        checkDate.setDate(startDate.getDate() + (week * 7) + day);
+        if (isDateUnavailable(checkDate)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  };
+
+  const isShortStayPeriodAvailable = (startDate: Date, nights: number): boolean => {
+    for (let day = 0; day < nights; day++) {
+      const checkDate = new Date(startDate);
+      checkDate.setDate(startDate.getDate() + day);
+      if (isDateUnavailable(checkDate)) {
+        return false;
+      }
+    }
+    return true;
+  };
+
   const handleDayClick = (day: Day) => {
     if (!day.date || !day.fullDate) return;
     
+    // Prevent clicking on unavailable dates
+    if (day.isUnavailable) return;
+    
     if (bookingMode === 'weekly') {
       if (!day.checkin) return;
+      
+      // Check if the full week is available before allowing selection
+      if (!isWeeklyPeriodAvailable(day.fullDate, 1)) {
+        alert('This week overlaps with existing bookings or unavailable dates.');
+        return;
+      }
+      
       const newEndDate = updateStayDuration(day.fullDate, 1);
       setSelectedStay({
         start: day.fullDate,
@@ -135,6 +251,12 @@ const CalendarVisualization = () => {
         nights: 7
       });
     } else {
+      // Check if the short stay period is available
+      if (!isShortStayPeriodAvailable(day.fullDate, MIN_SHORT_STAY)) {
+        alert('This stay period overlaps with existing bookings or unavailable dates.');
+        return;
+      }
+      
       const newEndDate = updateShortStayDuration(day.fullDate, MIN_SHORT_STAY);
       setSelectedStay({
         start: day.fullDate,
@@ -168,7 +290,8 @@ const CalendarVisualization = () => {
             fullDate,
             checkin: dayIndex === 6,
             checkout: dayIndex === 5,
-            name: days[dayIndex]
+            name: days[dayIndex],
+            isUnavailable: isDateUnavailable(fullDate)
           });
           currentDate++;
         }
@@ -183,6 +306,32 @@ const CalendarVisualization = () => {
     if (!date || !selectedStay.start || !selectedStay.end) return false;
     const checkDate = new Date(viewDate.year, viewDate.month, date);
     return checkDate >= selectedStay.start && checkDate <= selectedStay.end;
+  };
+
+  const getStayPeriodPosition = (day: Day, weekIndex: number, dayIndex: number, weeks: Week[]) => {
+    if (!day.date || !isDateInStayPeriod(day.date)) return null;
+    
+    const isStart = day.fullDate && selectedStay.start && day.fullDate.getTime() === selectedStay.start.getTime();
+    const isEnd = day.fullDate && selectedStay.end && day.fullDate.getTime() === selectedStay.end.getTime();
+    const isMiddle = !isStart && !isEnd;
+    
+    // Check if this is the first day of a week (Saturday, dayIndex 6 in our layout)
+    const isStartOfWeek = dayIndex === 0;
+    const isEndOfWeek = dayIndex === 6;
+    
+    // Check if the previous/next day is also in the stay period
+    const prevDayInPeriod = dayIndex > 0 && weeks[weekIndex].days[dayIndex - 1].date && isDateInStayPeriod(weeks[weekIndex].days[dayIndex - 1].date);
+    const nextDayInPeriod = dayIndex < 6 && weeks[weekIndex].days[dayIndex + 1].date && isDateInStayPeriod(weeks[weekIndex].days[dayIndex + 1].date);
+    
+    return {
+      isStart,
+      isEnd,
+      isMiddle,
+      isStartOfWeek,
+      isEndOfWeek,
+      prevDayInPeriod,
+      nextDayInPeriod
+    };
   };
 
   const getStayPeriodText = () => {
@@ -273,52 +422,93 @@ const CalendarVisualization = () => {
           </div>
           
           {weeks.map((week, weekIndex) => (
-            <div key={weekIndex} className="grid grid-cols-7 gap-2">
-              {week.days.map((day, dayIndex) => (
-                <div 
-                  key={`${weekIndex}-${dayIndex}`}
-                  onClick={() => day.date && handleDayClick(day)}
-                  className={`
-                    p-4 rounded-lg text-center border
-                    ${!day.date ? 'bg-gray-50 opacity-50' : ''}
-                    ${(bookingMode === 'weekly' && day.checkin) || bookingMode === 'short' ? 'hover:bg-green-200 cursor-pointer' : ''}
-                    ${isDateInStayPeriod(day.date) ? 'bg-yellow-100 border-yellow-500' : ''}
-                    ${day.fullDate && selectedStay.start && day.fullDate.getTime() === selectedStay.start.getTime() ? 'bg-green-100 border-green-500' : ''}
-                    ${day.fullDate && selectedStay.end && day.fullDate.getTime() === selectedStay.end.getTime() ? 'bg-blue-100 border-blue-500' : ''}
-                    ${day.date && !isDateInStayPeriod(day.date) && (!day.fullDate || 
-                      (day.fullDate.getTime() !== selectedStay?.start?.getTime() && 
-                       day.fullDate.getTime() !== selectedStay?.end?.getTime())) 
-                      ? 'bg-gray-50' : ''}
-                  `}
-                >
-                  {day.date && (
-                    <>
-                      <div className="mb-1 body-base">{day.date}</div>
-                      {day.fullDate && selectedStay.start && day.fullDate.getTime() === selectedStay.start.getTime() && 
-                        <div className="text-green-700 text-sm label-sm">Check-in</div>}
-                      {day.fullDate && selectedStay.end && day.fullDate.getTime() === selectedStay.end.getTime() && 
-                        <div className="text-blue-700 text-sm label-sm">Check-out</div>}
-                    </>
-                  )}
-                </div>
-              ))}
+            <div key={weekIndex} className="grid grid-cols-7 gap-0">
+              {week.days.map((day, dayIndex) => {
+                const stayPosition = getStayPeriodPosition(day, weekIndex, dayIndex, weeks);
+                const isInStayPeriod = isDateInStayPeriod(day.date);
+                const isStartDate = day.fullDate && selectedStay.start && day.fullDate.getTime() === selectedStay.start.getTime();
+                const isEndDate = day.fullDate && selectedStay.end && day.fullDate.getTime() === selectedStay.end.getTime();
+                
+                let borderRadiusClass = '';
+                let marginClass = '';
+                
+                if (stayPosition) {
+                  const { isStart, isEnd, isStartOfWeek, isEndOfWeek } = stayPosition;
+                  
+                  // Handle border radius for connected ranges
+                  if (isStart && isEnd) {
+                    borderRadiusClass = 'rounded-lg';
+                  } else if (isStart) {
+                    borderRadiusClass = isEndOfWeek ? 'rounded-lg' : 'rounded-l-lg rounded-r-none';
+                    if (!isEndOfWeek) marginClass = '-mr-px relative z-10';
+                  } else if (isEnd) {
+                    borderRadiusClass = isStartOfWeek ? 'rounded-lg' : 'rounded-r-lg rounded-l-none';
+                    if (!isStartOfWeek) marginClass = '-ml-px relative z-10';
+                  } else {
+                    // Middle of range
+                    if (isStartOfWeek && isEndOfWeek) {
+                      borderRadiusClass = 'rounded-lg';
+                    } else if (isStartOfWeek) {
+                      borderRadiusClass = 'rounded-l-lg rounded-r-none';
+                      marginClass = '-mr-px relative z-10';
+                    } else if (isEndOfWeek) {
+                      borderRadiusClass = 'rounded-r-lg rounded-l-none';
+                      marginClass = '-ml-px relative z-10';
+                    } else {
+                      borderRadiusClass = 'rounded-none';
+                      marginClass = '-mx-px relative z-10';
+                    }
+                  }
+                } else {
+                  borderRadiusClass = 'rounded-lg';
+                }
+                
+                return (
+                  <div 
+                    key={`${weekIndex}-${dayIndex}`}
+                    onClick={() => day.date && handleDayClick(day)}
+                    className={`
+                      h-20 p-4 text-center transition-colors cursor-pointer ${borderRadiusClass} ${marginClass}
+                      ${!day.date ? 'bg-gray-50 opacity-50' : ''}
+                      ${day.isUnavailable ? 'bg-gray-100 cursor-not-allowed opacity-60' : ''}
+                      ${!day.isUnavailable && ((bookingMode === 'weekly' && day.checkin) || bookingMode === 'short') ? 'hover:bg-burnt-sienna-50' : ''}
+                      ${isInStayPeriod ? 'bg-burnt-sienna-100' : ''}
+                      ${isStartDate ? 'bg-burnt-sienna-500 text-white' : ''}
+                      ${isEndDate ? 'bg-burnt-sienna-500 text-white' : ''}
+                      ${day.date && !day.isUnavailable && !isInStayPeriod && !isStartDate && !isEndDate 
+                        ? 'bg-gray-50 border border-gray-200' : ''}
+                    `}
+                  >
+                    {day.date && (
+                      <>
+                        <div className={`mb-1 body-base ${day.isUnavailable ? 'text-gray-400' : ''}`}>{day.date}</div>
+                        {day.isUnavailable && <div className="text-gray-500 text-xs label-sm">Unavailable</div>}
+                        {!day.isUnavailable && isStartDate && 
+                          <div className="text-white text-sm label-sm">Check-in</div>}
+                        {!day.isUnavailable && isEndDate && 
+                          <div className="text-white text-sm label-sm">Check-out</div>}
+                      </>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           ))}
         </div>
         
         <div className="mt-6 flex flex-col gap-4">
-          <div className="flex gap-4 justify-center">
+          <div className="flex gap-3 justify-center flex-wrap">
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-green-100 border border-green-500 rounded"></div>
-              <span className="label-sm">Check-in</span>
+              <div className="w-4 h-4 bg-burnt-sienna-500 rounded"></div>
+              <span className="label-sm">Check-in/Check-out</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-yellow-100 border border-yellow-500 rounded"></div>
+              <div className="w-4 h-4 bg-burnt-sienna-100 border border-burnt-sienna-300 rounded"></div>
               <span className="label-sm">Stay Period</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-blue-100 border border-blue-500 rounded"></div>
-              <span className="label-sm">Check-out</span>
+              <div className="w-4 h-4 bg-gray-100 border border-gray-300 rounded opacity-60"></div>
+              <span className="label-sm">Unavailable</span>
             </div>
           </div>
 

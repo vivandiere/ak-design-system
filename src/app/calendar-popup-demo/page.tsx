@@ -1,9 +1,11 @@
 'use client';
 
 import DesignSystemLayout from '@/components/DesignSystemLayout'
-import DatePickerPopup from '@/components/DatePickerPopup'
+import DatePickerPopup from '@/components/DatePickerPopupNew'
+import OffersBadge from '@/components/OffersBadge'
 import { Button } from '@/components/ui/button'
 import { Popover } from '@/components/ui/popover'
+import { Calendar } from 'react-feather'
 import { useState, useRef } from 'react'
 
 export default function CalendarPopupDemo() {
@@ -16,6 +18,10 @@ export default function CalendarPopupDemo() {
   const handleDateSelect = (startDate: Date, endDate: Date) => {
     setSelectedStartDate(startDate);
     setSelectedEndDate(endDate);
+    // Don't auto-close the popup - let user confirm their selection
+  };
+
+  const handleConfirm = () => {
     setIsDatePickerOpen(false);
   };
 
@@ -48,21 +54,43 @@ export default function CalendarPopupDemo() {
     return Math.round(weeklyRate * nights);
   };
 
-  const getPriceRange = () => {
+  const getLowestPrice = () => {
     const silverPrice = 12640;
     const personalisedPrice = 23830;
-    return `$${silverPrice.toLocaleString()}—$${personalisedPrice.toLocaleString()}`;
+    return Math.min(silverPrice, personalisedPrice);
   };
+
+  const getLowestNightlyRate = () => {
+    return Math.round(getLowestPrice() / 7); // Convert weekly to nightly
+  };
+
+  // Sample offers - could come from props or API
+  const currentOffers = [
+    {
+      id: 'weekly-discount',
+      type: 'price' as const,
+      title: '15% off',
+      description: 'for stays over 7 days',
+      color: 'forest' as const
+    },
+    {
+      id: 'concierge-service',
+      type: 'service' as const,
+      title: 'Complimentary',
+      description: 'concierge service',
+      color: 'cerulean' as const
+    }
+  ];
 
   return (
     <DesignSystemLayout>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <header className="mb-12">
-          <h1 className="ds-display mb-4">Date Picker Popup</h1>
+          <h1 className="ds-display mb-4">Booking Module and Date Picker</h1>
           <p className="ds-body-large text-gray-600 max-w-3xl">
-            A comprehensive calendar popup component for date selection in booking interfaces. Features include 
-            weekly/short stay modes, duration controls, real-time pricing, and full A&K design system integration.
+            A comprehensive booking module featuring calendar date picker, pricing calculations, offers integration, 
+            weekly/short stay modes, and real-time availability checking. Built with full A&K design system integration.
           </p>
         </header>
 
@@ -91,9 +119,7 @@ export default function CalendarPopupDemo() {
                         <span className={selectedStartDate ? 'text-gray-900' : 'text-gray-500'}>
                           {formatDateRange()}
                         </span>
-                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
+                        <Calendar className="w-4 h-4 text-gray-400" />
                       </div>
                     </button>
                     {selectedStartDate && selectedEndDate && (
@@ -155,30 +181,67 @@ export default function CalendarPopupDemo() {
 
                 {/* Pricing Information */}
                 <div className="mb-6">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg font-medium text-gray-900">
-                      {selectedStartDate && selectedEndDate 
-                        ? `$${getTotalPrice().toLocaleString()}`
-                        : getPriceRange()
-                      }
-                    </span>
-                    <span className="text-sm text-gray-600">
-                      A WEEK *
-                    </span>
-                    <Popover 
-                      content={
-                        <div className="space-y-2">
-                          <p className="body-small font-medium">Weekly Booking Information</p>
-                          <p className="body-small">Check-in is on Saturday, as booking weeks are made up of 7 days starting from Saturday to Friday.</p>
-                          <p className="body-small">This ensures consistent weekly rental periods for villa bookings.</p>
+                  {selectedStartDate && selectedEndDate ? (
+                    // Show total price when dates are selected
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg font-medium text-onyx">
+                        ${getTotalPrice().toLocaleString()}
+                      </span>
+                      <span className="label-small text-onyx-60">
+                        TOTAL
+                      </span>
+                      <Popover 
+                        content={
+                          <div className="space-y-2">
+                            <p className="body-small font-medium">Total Price Calculation</p>
+                            <p className="body-small">Based on {getNightsCount()} nights at the selected rate and booking level.</p>
+                          </div>
+                        }
+                      >
+                        <button className="w-5 h-5 bg-onyx rounded-full flex items-center justify-center hover:bg-onyx-80 transition-colors">
+                          <span className="text-white text-xs font-bold">?</span>
+                        </button>
+                      </Popover>
+                    </div>
+                  ) : (
+                    // Show "PRICES FROM" when no dates selected
+                    <div className="space-y-1">
+                      <div className="label-small text-onyx">PRICES FROM</div>
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg font-medium text-onyx">
+                            ${getLowestPrice().toLocaleString()}
+                          </span>
+                          <span className="label-small text-onyx-60">A week</span>
                         </div>
-                      }
-                    >
-                      <button className="w-5 h-5 bg-onyx rounded-full flex items-center justify-center hover:bg-onyx-80 transition-colors">
-                        <span className="text-white text-xs font-bold">?</span>
-                      </button>
-                    </Popover>
-                  </div>
+                        <div className="text-onyx-40">/</div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg font-medium text-onyx">
+                            ${getLowestNightlyRate().toLocaleString()}
+                          </span>
+                          <span className="label-small text-onyx-60">A night</span>
+                        </div>
+                        <Popover 
+                          content={
+                            <div className="space-y-2">
+                              <p className="body-small font-medium">Pricing Information</p>
+                              <p className="body-small">Prices shown are the lowest available rates. Final price depends on selected dates, booking level, and villa package.</p>
+                              <p className="body-small">Weekly rates start on Saturday and include 7 consecutive nights.</p>
+                            </div>
+                          }
+                        >
+                          <button className="w-5 h-5 bg-onyx rounded-full flex items-center justify-center hover:bg-onyx-80 transition-colors">
+                            <span className="text-white text-xs font-bold">?</span>
+                          </button>
+                        </Popover>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Offers Badge */}
+                <div className="mb-6">
+                  <OffersBadge offers={currentOffers} />
                 </div>
 
                 {/* Action Buttons */}
@@ -248,6 +311,7 @@ export default function CalendarPopupDemo() {
             </div>
           </div>
         </section>
+
       </div>
 
       {/* Date Picker Popup */}
@@ -258,6 +322,7 @@ export default function CalendarPopupDemo() {
         selectedStartDate={selectedStartDate}
         selectedEndDate={selectedEndDate}
         onDateSelect={handleDateSelect}
+        onConfirm={handleConfirm}
         minStayNights={3}
       />
     </DesignSystemLayout>

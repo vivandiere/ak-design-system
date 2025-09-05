@@ -108,6 +108,28 @@ export default function DesignSystemLayout({ children }: DesignSystemLayoutProps
               <h3 className="ds-label text-gray-500 mb-3">COMPONENTS</h3>
               <div className="space-y-2">
                 <Link 
+                  href="/badges" 
+                  className={cn(
+                    "ds-body block py-2 px-3 rounded-md transition-colors text-sm",
+                    pathname === '/badges' 
+                      ? "bg-gray-100 text-gray-900" 
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                  )}
+                >
+                  Badges
+                </Link>
+                <Link 
+                  href="/product-cards" 
+                  className={cn(
+                    "ds-body block py-2 px-3 rounded-md transition-colors text-sm",
+                    pathname === '/product-cards' 
+                      ? "bg-gray-100 text-gray-900" 
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                  )}
+                >
+                  Product Cards
+                </Link>
+                <Link 
                   href="/calendar-popup-demo" 
                   className={cn(
                     "ds-body block py-2 px-3 rounded-md transition-colors text-sm",
@@ -116,7 +138,7 @@ export default function DesignSystemLayout({ children }: DesignSystemLayoutProps
                       : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                   )}
                 >
-                  Date Picker Popup
+                  Booking Module and Date Picker
                 </Link>
                 <Link 
                   href="/villas-filter" 
