@@ -74,13 +74,6 @@ export default function Home() {
               >
                 📅 Booking Module and Date Picker
               </Link>
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4 mt-4">
-                <h3 className="font-semibold text-green-800 mb-2">✅ Gap Issue Resolved!</h3>
-                <p className="text-green-700 text-sm">
-                  Calendar now features perfect connected ranges with zero white gaps using 
-                  CSS Grid + negative margins technique.
-                </p>
-              </div>
             </div>
           </div>
         </section>
