@@ -363,7 +363,6 @@ export const BookingCalendar: React.FC<BookingCalendarProps> = ({
         className={cn("border rounded-lg", className)}
         classNames={{
           months: "grid grid-cols-2 gap-8 p-6",
-          month_grid: "grid grid-cols-7 gap-0 mt-4",
           weekdays: "grid grid-cols-7 gap-0 mb-2",
           weekday: "body-small text-onyx-60 font-medium p-2 text-center",
           day: "relative h-12 w-12 text-center text-sm flex items-center justify-center cursor-pointer transition-colors",
