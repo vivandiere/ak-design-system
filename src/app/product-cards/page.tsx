@@ -44,12 +44,14 @@ export default function ProductCardsPage() {
                         id: 'new',
                         type: 'service',
                         title: 'NEW',
+                        description: 'Newly available property',
                         color: 'cerulean'
                       },
                       {
                         id: 'offer',
                         type: 'price',
                         title: 'OFFER',
+                        description: 'Special pricing available',
                         color: 'sienna'
                       }
                     ]}
@@ -80,6 +82,7 @@ export default function ProductCardsPage() {
                         id: 'early-bird',
                         type: 'price',
                         title: 'EARLY BIRD',
+                        description: 'Book early and save',
                         color: 'forest'
                       }
                     ]}
@@ -112,6 +115,7 @@ export default function ProductCardsPage() {
                         id: 'concierge',
                         type: 'service',
                         title: 'CONCIERGE',
+                        description: 'Premium concierge service included',
                         color: 'warm-sand'
                       }
                     ]}
