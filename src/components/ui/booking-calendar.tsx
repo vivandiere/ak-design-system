@@ -363,33 +363,29 @@ export const BookingCalendar: React.FC<BookingCalendarProps> = ({
         className={cn("border rounded-lg", className)}
         classNames={{
           months: "grid grid-cols-2 gap-8 p-6",
-          weekdays: "grid grid-cols-7 gap-0 mb-2",
-          weekday: "body-small text-onyx-60 font-medium p-2 text-center",
-          day: "relative h-12 w-12 text-center text-sm flex items-center justify-center cursor-pointer transition-colors",
-          range_start: "bg-burnt-sienna-500 text-white rounded-l-lg relative z-10 -mr-px",
-          range_middle: "bg-burnt-sienna-100 text-burnt-sienna-900 relative z-10 -mx-px",
-          range_end: "bg-burnt-sienna-500 text-white rounded-r-lg relative z-10 -ml-px",
-          selected: "bg-burnt-sienna-500 text-white",
-          today: "font-bold text-burnt-sienna-600",
-          disabled: "text-gray-400 cursor-not-allowed opacity-50",
-          outside: "text-gray-400",
-          hidden: "invisible",
-          nav: "flex items-center justify-between mb-4",
-          button_previous: cn(
+          month: "space-y-3",
+          caption: "flex justify-center pt-1 relative items-center",
+          caption_label: "text-sm font-medium",
+          nav: "space-x-1 flex items-center",
+          nav_button: cn(
             buttonVariants({ variant: "outline", size: "icon" }),
             "h-8 w-8"
           ),
-          button_next: cn(
-            buttonVariants({ variant: "outline", size: "icon" }),
-            "h-8 w-8"
-          ),
-          month_caption: "label-lg text-onyx text-center flex-1",
-        }}
-        components={{
-          Chevron: ({ orientation }) => 
-            orientation === "left" ? 
-              <ChevronLeft className="h-4 w-4" /> : 
-              <ChevronRight className="h-4 w-4" />
+          nav_button_previous: "absolute left-1",
+          nav_button_next: "absolute right-1",
+          table: "w-full border-collapse space-y-1",
+          head_row: "flex",
+          head_cell: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
+          row: "flex w-full mt-2",
+          cell: "h-9 w-9 text-center text-sm p-0 relative",
+          day: "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors h-9 w-9 p-0 font-normal hover:bg-burnt-sienna-50 hover:text-burnt-sienna-900",
+          day_range_start: "bg-burnt-sienna-500 text-white rounded-l-lg",
+          day_range_middle: "bg-burnt-sienna-100 text-burnt-sienna-900",
+          day_range_end: "bg-burnt-sienna-500 text-white rounded-r-lg",
+          day_selected: "bg-burnt-sienna-500 text-white",
+          day_today: "bg-burnt-sienna-50 text-burnt-sienna-900 font-semibold",
+          day_outside: "text-gray-400 opacity-50",
+          day_disabled: "text-gray-400 opacity-50",
         }}
       />
 

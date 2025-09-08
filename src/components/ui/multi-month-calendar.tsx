@@ -66,12 +66,6 @@ export const MultiMonthCalendar: React.FC<MultiMonthCalendarProps> = ({
         day_range_middle: "aria-selected:bg-burnt-sienna-100 aria-selected:text-burnt-sienna-900",
         day_hidden: "invisible",
       }}
-      components={{
-        Chevron: ({ orientation, ...props }) => {
-          const Icon = orientation === "left" ? ChevronLeft : ChevronRight
-          return <Icon className="h-4 w-4" {...props} />
-        },
-      }}
       {...props}
     />
   )
