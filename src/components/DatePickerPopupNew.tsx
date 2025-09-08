@@ -131,7 +131,7 @@ const updateStayDuration = (startDate: Date, weeks: number): Date => {
 
 const updateShortStayDuration = (startDate: Date, nights: number): Date => {
   const endDate = new Date(startDate);
-  endDate.setDate(startDate.getDate() + nights - 1);
+  endDate.setDate(startDate.getDate() + nights);
   return endDate;
 };
 
